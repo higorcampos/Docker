@@ -1,0 +1,50 @@
+version: '3'
+services:
+  app:
+    build: .
+    volumes:
+      - ./:/var/www
+    depends_on:
+      - app-mariadb
+      - app-redis
+      - app-postgres
+
+  app-mariadb:
+    image: mariadb:latest
+    command: --innodb-use-native-aio=0
+    restart: always
+    ports:
+      - "3306"
+    volumes:
+      - "./.docker/dbdata/mariadb:/var/lib/mysql"
+    environment:
+      MYSQL_DATABASE: app
+      MYSQL_ROOT_PASSWORD: root
+
+      
+  app-postgres:
+    image: postgres:latest
+    command: --innodb-use-native-aio=0
+    restart: always
+    ports:
+      - "3319"
+    volumes:
+      - "./.docker/dbdata/postgres:/var/lib/postgresql"
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_PASSWORD: root
+
+  app-redis:
+    image: redis:alpine
+    expose:
+      - 6379
+
+  app-nginx:
+    build: ./.docker/nginx
+    restart: always
+    ports:
+      - "8001:80"
+    volumes:
+      - ./:/var/www
+    depends_on:
+      - app
